@@ -22,6 +22,12 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+app.get('/urls/:shortURL', (req, res) => {
+//currently outputs as a text link in long URL
+  const templateVars = { shortURL: req.params.shortURL, longURL: `${urlDatabase[req.params.shortURL]}`}//* What goes here? */ };
+  res.render("urls_show", templateVars);;
+});
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n")
 });
