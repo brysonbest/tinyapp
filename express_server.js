@@ -42,9 +42,20 @@ app.get("/urls/new", (req, res) => {
 })
 
 app.get('/urls/:shortURL', (req, res) => {
-//currently outputs as a text link in long URL
   const templateVars = { shortURL: req.params.shortURL, longURL: `${urlDatabase[req.params.shortURL]}`}
-  res.render("urls_show", templateVars);;
+  if(urlDatabase[req.params.shortURL]){
+    res.render("urls_show", templateVars);
+  }
+  res.send("Error 404: URL not found.")
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  if(urlDatabase[req.params.shortURL]){
+    res.redirect(longURL);
+  }
+  res.send("Error 404: URL not found.");
+
 });
 
 app.post("/urls", (req, res) => {
@@ -56,3 +67,8 @@ app.post("/urls", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+//Look at edge cases now
+//What would happen if a client requests a non-existent shortURL?
+//What happens to the urlDatabase when the server is restarted?
+//What type of status code do our redirects have? What does this status code mean?
