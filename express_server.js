@@ -13,6 +13,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
+
 const generateRandomString = function() {
   let randSt = "";
   let characterBase = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -87,6 +100,15 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie('username');
   res.redirect("/urls");
+});
+
+app.post('/register', (req, res) => {
+  const username = req.body.email;
+  const password = req.body.password;
+  const userID = generateRandomString();
+  users[userID] = {'id': userID, 'email': username, 'password': password};
+  res.cookie('user_id', userID);
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
