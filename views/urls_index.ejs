@@ -27,7 +27,7 @@
             <% const delURL = "/urls/" + url + "/delete" %>
             <% const editURL = "/urls/" + url %>   
             <td><%= url %></td>
-            <td><%= urls[url] %></td>
+            <td><%= urls[url]['longURL'] %></td>
             <td><a href = "<%= editURL %>"><button type= "button" class="btn btn-outline-primary">Edit</button></a></form></td>
             <td><form action="<%= delURL %>" method="post" name ="submit"><input type ="submit" value="Delete" class="btn btn-outline-danger"></form></td>
           </tr>
