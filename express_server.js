@@ -39,12 +39,14 @@ const findUser = function(user_id) {
   if (users[user_id]){
     return users[user_id];
   }
-  // for (let user in users) {
-  //   if (user['email'] === user_id) {
-  //     return user;
-  //   }
-  // }
-  // return undefined;
+};
+
+const findEmail = function(username) {
+  for (const user in users) {
+    if(users[user]['email'] === username) {
+      return users[user]['email'];
+    }
+  }
 };
 
 app.get("/", (req, res) => {
@@ -70,12 +72,17 @@ app.get("/register", (req, res) => {
   res.render("urls_registration", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {username: (findUser(req.cookies['user_id']))};
+  res.render("login.ejs", templateVars);
+});
+
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = { username: r(findUser(req.cookies['user_id'])), shortURL: req.params.shortURL, longURL: `${urlDatabase[req.params.shortURL]}`};
   if (urlDatabase[req.params.shortURL]) {
     res.render("urls_show", templateVars);
   }
-  res.send("Error 404: URL not found.");
+  res.status(404).send('Error 404');
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -83,8 +90,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
     res.redirect(longURL);
   }
-  res.send("Error 404: URL not found.");
-
+  res.status(404).send('Error 404');
 });
 
 app.post("/urls", (req, res) => {
@@ -120,6 +126,13 @@ app.post('/register', (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
   const userID = generateRandomString();
+  if (username === "" || password === ""){
+    res.status(400).send("Error 400");
+    //res.render('error', { error: err }); 
+  }
+  if (findEmail(username)) {
+    res.status(400).send("Error 400");
+  }
   users[userID] = {'id': userID, 'email': username, 'password': password};
   res.cookie('user_id', userID);
   res.redirect('/urls');
