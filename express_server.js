@@ -49,6 +49,16 @@ const findEmail = function(username) {
   }
 };
 
+const urlsForUser = function(id) {
+  let userUrls = {};
+  for (let url in urlDatabase) {
+    if (urlDatabase[url]['userID'] === id) {
+      userUrls[url] = urlDatabase[url];
+    }
+  }
+  return userUrls;
+};
+
 app.get("/", (req, res) => {
   res.redirect('/urls');
 });
@@ -58,14 +68,16 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase, username: (findUser(req.cookies['user_id']))};
+  const userUrls = urlsForUser(req.cookies['user_id']);
+  const templateVars = { urls: userUrls, username: (findUser(req.cookies['user_id']))};
   res.render('urls_index', templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {username: (findUser(req.cookies['user_id']))};
-  if(!templateVars['username']) {
+  if (!templateVars['username']) {
     res.redirect('/urls');
+    return;
   }
   res.render("urls_new", templateVars);
 });
@@ -81,10 +93,19 @@ app.get("/login", (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
+  if (!req.cookies['user_id']) {
+    res.status(401).send('Error 401 - Please Login');
+    return;
+  }
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+    res.status(401).send('Error 401 - Incorrect user profile.');
+    return;
+  }
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
   const templateVars = { username: (findUser(req.cookies['user_id'])), shortURL: req.params.shortURL, longURL: `${longURL}`};
   if (urlDatabase[req.params.shortURL]) {
     res.render("urls_show", templateVars);
+    return;
   }
   res.status(404).send('Error 404');
 });
@@ -93,6 +114,7 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
   if (urlDatabase[req.params.shortURL]) {
     res.redirect(longURL);
+    return;
   }
   res.status(404).send('Error 404');
 });
@@ -104,12 +126,20 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+    res.status(401).send('Invalid User.');
+    return;
+  }
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL/", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL;
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+    res.status(401).send('Invalid User.');
+    return;
+  }
+  urlDatabase[req.params.shortURL]['longURL'] = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -118,9 +148,11 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   if (!findEmail(username)) {
     res.status(403).send("Error 403 - User not found");
+    return;
   }
   if (findEmail(username)['password'] !== password) {
     res.status(403).send("Error 403 - Password does not match.");
+    return;
   }
   const userID = findEmail(username)['id'];
   // const userID = findUser(username);
@@ -140,10 +172,12 @@ app.post('/register', (req, res) => {
   const userID = generateRandomString();
   if (username === "" || password === "") {
     res.status(400).send("Error 400 - Field Left Blank");
+    return;
     //res.render('error', { error: err });
   }
   if (findEmail(username)) {
     res.status(400).send("Error 400 - User Email Already Exists");
+    return;
   }
   users[userID] = {'id': userID, 'email': username, 'password': password};
   res.cookie('user_id', userID);
