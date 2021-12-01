@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
+
+
 const app = express();
 const PORT = 8080; //default port
 
@@ -36,12 +38,14 @@ const generateRandomString = function() {
   return randSt;
 };
 
+//finds the user using the userID
 const findUser = function(userID) {
   if (users[userID]) {
     return users[userID];
   }
 };
 
+//finds the user using the given email address/username
 const findEmail = function(username) {
   for (const user in users) {
     if (users[user]['email'] === username) {
@@ -50,6 +54,7 @@ const findEmail = function(username) {
   }
 };
 
+//identifies the urls that are connected to a specific userID
 const urlsForUser = function(id) {
   let userUrls = {};
   for (let url in urlDatabase) {
@@ -121,7 +126,17 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const newShort = generateRandomString();
+  let newShort = generateRandomString();
+  //check if there is a duplicate and re-generate if found
+  let loop = () => {
+    for (let url in urlDatabase) {
+      if (urlDatabase[url]['id'] === newShort) {
+        newShort = generateRandomString();
+        loop();
+      }
+    }
+  };
+  loop();
   urlDatabase[newShort] = {longURL: req.body.longURL, userID: req.cookies['user_id']};
   res.redirect(`/urls/${newShort}`);
 });
@@ -173,7 +188,7 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
-  if (username === "" || password === "") {
+  if (!username || !password) {
     res.status(400).send("Error 400 - Field Left Blank");
     return;
     //res.render('error', { error: err });
