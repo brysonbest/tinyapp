@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080; //default port
 
@@ -146,11 +147,12 @@ app.post("/urls/:shortURL/", (req, res) => {
 app.post("/login", (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
+  const userPass = findEmail(username)['password'];
   if (!findEmail(username)) {
     res.status(403).send("Error 403 - User not found");
     return;
   }
-  if (findEmail(username)['password'] !== password) {
+  if (!bcrypt.compareSync(password, userPass)) {
     res.status(403).send("Error 403 - Password does not match.");
     return;
   }
@@ -169,6 +171,7 @@ app.post("/logout", (req, res) => {
 app.post('/register', (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
   if (username === "" || password === "") {
     res.status(400).send("Error 400 - Field Left Blank");
@@ -179,7 +182,7 @@ app.post('/register', (req, res) => {
     res.status(400).send("Error 400 - User Email Already Exists");
     return;
   }
-  users[userID] = {'id': userID, 'email': username, 'password': password};
+  users[userID] = {'id': userID, 'email': username, 'password': hashedPassword};
   res.cookie('user_id', userID);
   res.redirect('/urls');
 });
