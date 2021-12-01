@@ -86,8 +86,7 @@ app.get('/urls', (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {username: (findUser(req.session.user_id))};
   if (!templateVars['username']) {
-    res.redirect('/urls');
-    return;
+    return res.redirect('/urls');
   }
   res.render("urls_new", templateVars);
 });
@@ -103,30 +102,30 @@ app.get("/login", (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 404 - Page Not Found'};
+    return res.status(404).render('error', templateVars);   
+  }
   if (!req.session.user_id) {
-    res.status(401).send('Error 401 - Please Login');
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 401 - Please Login'};
+    return res.status(401).render('error', templateVars);
   }
   if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
-    res.status(401).send('Error 401 - Incorrect user profile.');
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 401 - Incorrect user profile'};
+    return res.status(401).render('error', templateVars);
   }
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
   const templateVars = { username: (findUser(req.session.user_id)), shortURL: req.params.shortURL, longURL: `${longURL}`};
-  if (urlDatabase[req.params.shortURL]) {
-    res.render("urls_show", templateVars);
-    return;
-  }
-  res.status(404).send('Error 404');
+  res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]['longURL'];
-  if (urlDatabase[req.params.shortURL]) {
-    res.redirect(longURL);
-    return;
+  if (!urlDatabase[req.params.shortURL]) {
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 404 - Page not found'};
+    return res.status(404).render('error', templateVars);
   }
-  res.status(404).send('Error 404');
+  const longURL = urlDatabase[req.params.shortURL]['longURL'];
+  res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
@@ -147,8 +146,8 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
-    res.status(401).send('Invalid User.');
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 401 - Invalid User'};
+    return res.status(401).render('error', templateVars);
   }
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
@@ -156,8 +155,8 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:shortURL/", (req, res) => {
   if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
-    res.status(401).send('Invalid User.');
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 401 - Invalid User'};
+    return res.status(401).render('error', templateVars);
   }
   urlDatabase[req.params.shortURL]['longURL'] = req.body.longURL;
   res.redirect("/urls");
@@ -168,12 +167,12 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   const userPass = findEmail(username)['password'];
   if (!findEmail(username)) {
-    res.status(403).send("Error 403 - User not found");
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 403 - User Not Found'};
+    return res.status(403).render('error', templateVars);
   }
   if (!bcrypt.compareSync(password, userPass)) {
-    res.status(403).send("Error 403 - Password does not match.");
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 403 - Password Does Not Match'};
+    return res.status(403).render('error', templateVars);
   }
   const userID = findEmail(username)['id'];
   req.session.user_id = userID;
@@ -191,13 +190,12 @@ app.post('/register', (req, res) => {
   const hashedPassword = bcrypt.hashSync(password, 10);
   const userID = generateRandomString();
   if (!username || !password) {
-    res.status(400).send("Error 400 - Field Left Blank");
-    return;
-    //res.render('error', { error: err });
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 400 - Field Left Blank'};
+    return res.status(400).render('error', templateVars);
   }
   if (findEmail(username)) {
-    res.status(400).send("Error 400 - User Email Already Exists");
-    return;
+    const templateVars = {username: (findUser(req.session.user_id)), errorCode: 'Error 400 - User Email Already Exists'};
+    return res.status(400).render('error', templateVars);
   }
   users[userID] = {'id': userID, 'email': username, 'password': hashedPassword};
   req.session.user_id = userID;
