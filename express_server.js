@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 
 
@@ -9,7 +9,11 @@ const PORT = 8080; //default port
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+  maxAge: 24 * 60 * 60 * 1000
+}))
 
 const urlDatabase = {
   // "b2xVn2": "http://www.lighthouselabs.ca",
@@ -74,13 +78,13 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const userUrls = urlsForUser(req.cookies['user_id']);
-  const templateVars = { urls: userUrls, username: (findUser(req.cookies['user_id']))};
+  const userUrls = urlsForUser(req.session.user_id);
+  const templateVars = { urls: userUrls, username: (findUser(req.session.user_id))};
   res.render('urls_index', templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {username: (findUser(req.cookies['user_id']))};
+  const templateVars = {username: (findUser(req.session.user_id))};
   if (!templateVars['username']) {
     res.redirect('/urls');
     return;
@@ -89,26 +93,26 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {username: (findUser(req.cookies['user_id']))};
+  const templateVars = {username: (findUser(req.session.user_id))};
   res.render("urls_registration", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = {username: (findUser(req.cookies['user_id']))};
+  const templateVars = {username: (findUser(req.session.user_id))};
   res.render("login.ejs", templateVars);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.status(401).send('Error 401 - Please Login');
     return;
   }
-  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
     res.status(401).send('Error 401 - Incorrect user profile.');
     return;
   }
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
-  const templateVars = { username: (findUser(req.cookies['user_id'])), shortURL: req.params.shortURL, longURL: `${longURL}`};
+  const templateVars = { username: (findUser(req.session.user_id)), shortURL: req.params.shortURL, longURL: `${longURL}`};
   if (urlDatabase[req.params.shortURL]) {
     res.render("urls_show", templateVars);
     return;
@@ -137,12 +141,12 @@ app.post("/urls", (req, res) => {
     }
   };
   loop();
-  urlDatabase[newShort] = {longURL: req.body.longURL, userID: req.cookies['user_id']};
+  urlDatabase[newShort] = {longURL: req.body.longURL, userID: req.session.user_id};
   res.redirect(`/urls/${newShort}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
     res.status(401).send('Invalid User.');
     return;
   }
@@ -151,7 +155,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:shortURL/", (req, res) => {
-  if (urlDatabase[req.params.shortURL]['userID'] !== req.cookies['user_id']) {
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.session.user_id) {
     res.status(401).send('Invalid User.');
     return;
   }
@@ -172,14 +176,12 @@ app.post("/login", (req, res) => {
     return;
   }
   const userID = findEmail(username)['id'];
-  // const userID = findUser(username);
-  // console.log(userID);
-  res.cookie('user_id', userID);
+  req.session.user_id = userID;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/urls");
 });
 
@@ -198,15 +200,10 @@ app.post('/register', (req, res) => {
     return;
   }
   users[userID] = {'id': userID, 'email': username, 'password': hashedPassword};
-  res.cookie('user_id', userID);
+  req.session.user_id = userID;
   res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
   console.log(`Tinyapp listening on port ${PORT}!`);
 });
-
-//Look at edge cases now
-//What would happen if a client requests a non-existent shortURL?
-//What happens to the urlDatabase when the server is restarted?
-//What type of status code do our redirects have? What does this status code mean?
