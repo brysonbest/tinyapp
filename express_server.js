@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const methodOverride = require('method-override');
 const {generateRandomString, findUser, findEmail, urlsForUser} = require('./helpers');
 
 
@@ -15,6 +16,7 @@ app.use(cookieSession({
   keys: ['key1', 'key2'],
   maxAge: 24 * 60 * 60 * 1000
 }));
+app.use(methodOverride('_method'));
 
 const urlDatabase = {
 };
@@ -97,7 +99,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${newShort}`);
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL/delete", (req, res) => {
   if (urlDatabase[req.params.shortURL]['userID'] !== req.session.usrID) {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 401 - Invalid User'};
     return res.status(401).render('error', templateVars);
@@ -106,7 +108,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:shortURL/", (req, res) => {
+app.put("/urls/:shortURL/", (req, res) => {
   if (urlDatabase[req.params.shortURL]['userID'] !== req.session.usrID) {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 401 - Invalid User'};
     return res.status(401).render('error', templateVars);
@@ -140,8 +142,6 @@ app.post("/logout", (req, res) => {
 app.post('/register', (req, res) => {
   const username = req.body.email;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const userID = generateRandomString();
   if (!username || !password) {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 400 - Field Left Blank'};
     return res.status(400).render('error', templateVars);
@@ -150,6 +150,8 @@ app.post('/register', (req, res) => {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 400 - User Email Already Exists'};
     return res.status(400).render('error', templateVars);
   }
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  const userID = generateRandomString();
   users[userID] = {'id': userID, 'email': username, 'password': hashedPassword};
   req.session.usrID = userID;
   res.redirect('/urls');
