@@ -56,6 +56,24 @@ app.get("/login", (req, res) => {
   res.render("login.ejs", templateVars);
 });
 
+app.get('/urls/:shortURL/analytics', (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 404 - Page Not Found'};
+    return res.status(404).render('error', templateVars);
+  }
+  if (!req.session.usrID) {
+    const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 401 - Please Login'};
+    return res.status(401).render('error', templateVars);
+  }
+  if (urlDatabase[req.params.shortURL]['userID'] !== req.session.usrID) {
+    const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 401 - Incorrect user profile'};
+    return res.status(401).render('error', templateVars);
+  }
+  const longURL = urlDatabase[req.params.shortURL]['longURL'];
+  const templateVars = { username: (findUser(req.session.usrID, users)), shortURL: req.params.shortURL, longURL: `${longURL}`, visits: urlDatabase[req.params.shortURL]['visits'], unique: urlDatabase[req.params.shortURL]['unique'], eachVisit: urlDatabase[req.params.shortURL]['eachVisit']};
+  res.render("urls_analytics", templateVars);
+});
+
 app.get('/urls/:shortURL', (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 404 - Page Not Found'};
@@ -70,7 +88,7 @@ app.get('/urls/:shortURL', (req, res) => {
     return res.status(401).render('error', templateVars);
   }
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
-  const templateVars = { username: (findUser(req.session.usrID, users)), shortURL: req.params.shortURL, longURL: `${longURL}`};
+  const templateVars = { username: (findUser(req.session.usrID, users)), shortURL: req.params.shortURL, longURL: `${longURL}`, visits: urlDatabase[req.params.shortURL]['visits'], unique: urlDatabase[req.params.shortURL]['unique'], eachVisit: urlDatabase[req.params.shortURL]['eachVisit']};
   res.render("urls_show", templateVars);
 });
 
@@ -79,6 +97,20 @@ app.get("/u/:shortURL", (req, res) => {
     const templateVars = {username: (findUser(req.session.usrID, users)), errorCode: 'Error 404 - Page not found'};
     return res.status(404).render('error', templateVars);
   }
+  //increments the visits statistic every time link is followed
+  urlDatabase[req.params.shortURL]['visits']++;
+
+  //if the visitor is new, will assign a visitor id cookie, and increase the unique visitor count
+  if (!req.session.visitor) {
+    //refactor loop code to modularize in helpers (take in database in generaterandomstring)
+    let visitorID = generateRandomString();
+    req.session.visitor = visitorID;
+    urlDatabase[req.params.shortURL]['unique']++;
+  }
+
+  //adds the date stamp and visitor id of every visitor to this link
+  urlDatabase[req.params.shortURL]['eachVisit'].push("" + req.session.visitor + " visited on " + Date());
+
   const longURL = urlDatabase[req.params.shortURL]['longURL'];
   res.redirect(longURL);
 });
@@ -86,7 +118,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let newShort = generateRandomString();
   //check if there is a duplicate and re-generate if found
-  let loop = () => {
+  const loop = () => {
     for (let url in urlDatabase) {
       if (urlDatabase[url]['id'] === newShort) {
         newShort = generateRandomString();
@@ -95,7 +127,7 @@ app.post("/urls", (req, res) => {
     }
   };
   loop();
-  urlDatabase[newShort] = {longURL: req.body.longURL, userID: req.session.usrID};
+  urlDatabase[newShort] = {longURL: req.body.longURL, userID: req.session.usrID, visits: 0, unique: 0, eachVisit: []};
   res.redirect(`/urls/${newShort}`);
 });
 
