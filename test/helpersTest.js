@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const {generateRandomString, findUser, findEmail, urlsForUser} = require('../helpers');
+const {generateRandomString, findUser, findEmail, urlsInDatabase} = require('../helpers');
 
 const testUsers = {
   "userRandomID": {
@@ -60,9 +60,9 @@ describe('findEmail', function() {
   });
 });
 
-describe('urlsForUser', function() {
+describe('urlsInDatabase', function() {
   it('should return the matching url object containing all matching urls if given a valid user', function() {
-    const user = urlsForUser("testID", urlDatabaseTest);
+    const user = urlsInDatabase("testID", 'userID', urlDatabaseTest);
     const expectedOutput = {"b2xVn2": {
       longURL: "http://www.lighthouselabs.ca",
       userID: "testID"
@@ -70,7 +70,7 @@ describe('urlsForUser', function() {
     assert.deepEqual(expectedOutput, user);
   });
   it('should return an empty object for an invalid user', function() {
-    const user = urlsForUser("fakeTestID", urlDatabaseTest);
+    const user = urlsInDatabase("fakeTestID", 'userID', urlDatabaseTest);
     const expectedOutput = {};
     assert.deepEqual(expectedOutput, user);
   });

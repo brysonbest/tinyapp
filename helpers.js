@@ -25,14 +25,22 @@ const findEmail = function(username, userbase) {
 };
 
 //identifies the urls that are connected to a specific userID
-const urlsForUser = function(id, database) {
+const urlsInDatabase = function(id, identifier, database) {
   let userUrls = {};
   for (let url in database) {
-    if (database[url]['userID'] === id) {
+    if (database[url][identifier] === id) {
       userUrls[url] = database[url];
     }
   }
   return userUrls;
 };
 
-module.exports = {generateRandomString, findUser, findEmail, urlsForUser};
+//loops through a given id, and if the callback function is truthy, regenerates the given id's value
+const loopID = function(id, callback) {
+  if (callback) {
+    id = generateRandomString();
+    loopID();
+  }
+};
+
+module.exports = {generateRandomString, findUser, findEmail, urlsInDatabase, loopID};
