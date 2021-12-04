@@ -12,21 +12,27 @@
   <%- include('partials/_header') %>
   <main style="margin: 1em;">
     <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
+      <div class="card-header">
         <h5 class="card-title">Analytics for: <a href = "../../u/<%= shortURL %>" ><%= shortURL %></a></h5>
-        <p class="card-text">Long URL: <%= longURL %></p>
       </div>
-    <div class="card-footer text-muted"></div>
-    <h5>Visits:</h5>
-    <div><%= visits || 0 %></div>
-    <h5>Unique Visitors:</h5>
-    <div><%= unique || 0 %></div>
-    <h5>Visitor List:</h5>
-    <% for(let item of eachVisit) { %>
-      <div><%= item %></div>
-    <% } %>
+      <div class="card-body">
+        <p class="card-text">Long URL: <%= longURL %></p>
+        <h5>Visits: <%= visits || 0 %></h5>
+        <h5>Unique Visitors: <%= unique || 0 %></h5>
+      </div>
+
   </div>
+  <div class="card text-center">
+    <div class="card-header">
+      <h5>Visitor List:</h5>
+    </div>
+    <div class="card-body">
+      <% for(let item of eachVisit) { %>
+        <div><%= item %></div>
+      <% } %>
+    </div>
+  </div>
+  <div class="card-footer text-muted"></div>
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

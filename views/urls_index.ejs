@@ -32,7 +32,7 @@
             <% const editURL = "/urls/" + url %>   
             <td><a href = "u/<%= url %>" ><%= url %></a></td>
             <td><%= urls[url]['longURL'] %></td>
-            <td><a href = "<%= editURL %>/analytics"><button type = "button" class="btn btn-outline-primary">Analytics</button></a></td>
+            <td><a href = "<%= editURL %>/analytics" class="link-info"><%= visits[url]['visits'] || 0 %> Visits</a></td>
             <td><a href = "<%= editURL %>"><button type= "button" class="btn btn-outline-primary">Edit</button></a></form></td>
             <td><form action="<%= delURL %>?_method=DELETE" method="post" name ="submit"><input type ="submit" value="Delete" class="btn btn-outline-danger"></form></td>
           </tr>

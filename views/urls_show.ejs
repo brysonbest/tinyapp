@@ -9,28 +9,30 @@
 <body>
   <%- include('partials/_header') %>
   <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
+      <div class="card-header">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
       </div>
-    <div class="card-footer text-muted"></div>
+      <div class="card-body">
+        <h4>Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></h4>
+        <a href = "<%= shortURL %>/analytics"><button type = "button" class="btn btn-outline-primary">Analytics</button></a>
+      </div>
+      <hr class="solid">
+      <div class="card-body">
     <form class="form align-items-center" action="/urls/<%= shortURL %>?_method=PUT" method="POST">
       <div class="form-center">
-        <h5 class="card-title"><label for="longURL">Edit:</label></h5>
-        <input class="form-control" type="text" required name="longURL" placeholder="<%= longURL %>" style="width: 300px; margin: 1em; margin-left:auto; margin-right:auto">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <h4 class="card-title"><label for="longURL">Edit:</label></h4>
+        <h6>
+         <input class="form-control" type="text" required name="longURL" placeholder="<%= longURL %>" style="width: 300px; margin: 1em; margin-left:auto; margin-right:auto">
+        <button type="submit" class="btn btn-primary">Submit</button></h6>
       </div>
     </form>
-    <h5>Visits:</h5>
-    <div><%= visits || 0 %></div>
-    <h5>Unique Visitors:</h5>
-    <div><%= unique || 0 %></div>
-    <h5>Visitor List:</h5>
-    <% for(let item of eachVisit) { %>
-      <div><%= item %></div>
-    <% } %>
+    </div>
+    <div class="card-footer text-muted">
+      <form action="/urls/<%= shortURL %>/delete?_method=DELETE" method="post" name ="submit"><input type ="submit" value="Delete" class="btn btn-outline-danger"></form>
+    </div>
   </div>
+
+
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
